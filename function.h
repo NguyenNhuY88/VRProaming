@@ -40,6 +40,7 @@ class Solution{
 public:
 
 	int nbOfCustomer;
+	int nbOfCusServiced;
 	int nbOfLocation;
 	int timeHorizon;
 
@@ -63,6 +64,7 @@ public:
     double Regret2();
     double Regret3();
     void Objective();
+    void RandomRemoval(int nbOfRemove);
     void PrintInput();
 };
 

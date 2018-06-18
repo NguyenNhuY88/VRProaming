@@ -4,9 +4,12 @@
 #include<fstream>
 #include<sstream>
 #include<algorithm>
+#include<stdlib.h>
+#include<ctime>
 #define MAX_NUM 99999999.0
 void Solution::ReadProblem(char *filename)
 {
+
     float vehCapacity;
      string s;
     ifstream openFile(filename);
@@ -18,15 +21,22 @@ void Solution::ReadProblem(char *filename)
 
     //read  number of Customer, number of Locaton, number of Vehicle, time horizon
         openFile >> nbOfCustomer >> nbOfLocation >> timeHorizon >> vehCapacity;
+     //   cout << nbOfCustomer <<" " << nbOfLocation << " " << timeHorizon << " " << vehCapacity<<endl;
 
+       // nbOfVehicle = nbOfCustomer;
         nbOfVehicle = nbOfCustomer;
 
     // delete line text and empty line
         getline(openFile,s);
+       // cout <<"1 " <<s << endl;
         getline(openFile,s);
+        // cout <<"2 " <<s << endl;
         getline(openFile,s);
+         //cout <<"3 "<<s << endl;
         getline(openFile,s);
+         //cout <<"4 " <<s << endl;
         getline(openFile,s);
+          //cout <<"5 " <<s << endl;
 
     //init vehicleList
         Vehicle *v = new Vehicle();
@@ -94,7 +104,7 @@ void Solution::ReadProblem(char *filename)
             }
 
         }
-
+    //    cout <<locationList[1].idCustomer <<" " << locationList[1].deman <<" " << locationList[1].id << "["<< locationList[1].windowStartTime <<" "<<locationList[1].windowEndTime << endl;
         getline(openFile, s);
         getline(openFile, s);
         getline(openFile, s);
@@ -223,6 +233,7 @@ void Solution::CalculateInsertionCost()
 
 void Solution::InitSolution()
 {
+    nbOfCusServiced = 0;
     for(int i = 0; i < 100; i++)
     {
         isInserted[i]= false;
@@ -264,6 +275,7 @@ double Solution::RegretOne()
     if(minInsertCost!=MAX_NUM)
     {
         vehicleList[minInsert_VehicleId].route.insert(vehicleList[minInsert_VehicleId].route.begin()+ minInsert_PositionId, locationList[minInsert_LocationId] );
+        nbOfCusServiced++;
         isInserted[locationList[minInsert_LocationId].idCustomer] = true;
         vehicleList[minInsert_VehicleId].currentCapacity += locationList[minInsert_LocationId].deman;
         locationList.erase(locationList.begin()+ minInsert_LocationId);
@@ -279,8 +291,10 @@ void Solution::Objective()
     {
         for(int pos = 1; pos < vehicleList[v].route.size(); pos++)
         {
+           // cout <<"cost("<<vehicleList[v].route[pos-1].id<<", "<<vehicleList[v].route[pos].id<<")" << costBtwLocation[vehicleList[v].route[pos-1].id][vehicleList[v].route[pos].id] <<"\t";
             obj += costBtwLocation[vehicleList[v].route[pos-1].id][vehicleList[v].route[pos].id];
         }
+       // cout << endl;
     }
 
 }
@@ -335,8 +349,8 @@ double Solution::Regret2()
     //Tim regretValue cua moi Location
    for(int l = 0; l < locationList.size(); l++)
     {
-        min1 = 99999999.0;
-        min2 = 99999999.0;
+        min1 = 999999999.0;
+        min2 = 999999999.0;
         for(int v = 0; v <vehicleList.size(); v++)
         {
             if(min1 > minCost_Lc_R[l][v])
@@ -349,7 +363,8 @@ double Solution::Regret2()
                 min2 = minCost_Lc_R[l][v];
             }
         }
-        if(min1 != MAX_NUM)
+      //  regretValue[l] = min2 - min1;
+       if(min1 != MAX_NUM)
         {
             regretValue[l] = min2 - min1;
         }
@@ -395,6 +410,7 @@ double Solution::Regret2()
     if(minInsertCost!=MAX_NUM)
     {
         vehicleList[minInsert_VehicleId].route.insert(vehicleList[minInsert_VehicleId].route.begin()+ minInsert_PositionId, locationList[minInsert_LocationId] );
+         nbOfCusServiced++;
         isInserted[locationList[minInsert_LocationId].idCustomer] = true;
         vehicleList[minInsert_VehicleId].currentCapacity += locationList[minInsert_LocationId].deman;
         locationList.erase(locationList.begin()+ minInsert_LocationId);
@@ -489,7 +505,7 @@ double Solution::Regret3()
         }
         if(min1 != MAX_NUM)
         {
-            regretValue[l] = min3 - min1;
+            regretValue[l] = min3 - min1 + min2 - min1;
         }
 
     }
@@ -533,6 +549,7 @@ double Solution::Regret3()
     if(minInsertCost!=MAX_NUM)
     {
         vehicleList[minInsert_VehicleId].route.insert(vehicleList[minInsert_VehicleId].route.begin()+ minInsert_PositionId, locationList[minInsert_LocationId] );
+         nbOfCusServiced++;
         isInserted[locationList[minInsert_LocationId].idCustomer] = true;
         vehicleList[minInsert_VehicleId].currentCapacity += locationList[minInsert_LocationId].deman;
         locationList.erase(locationList.begin()+ minInsert_LocationId);
@@ -551,8 +568,36 @@ double Solution::Regret3()
     return minInsertCost;
 }
 
+void Solution::RandomRemoval(int nbOfRemove)
+{
+    srand (time(NULL));
+    int removed = 0;
+    while(removed!=nbOfRemove)
+    {
+        int rdIndexRoute = rand()%(nbOfVehicle-1)+0;
+        if(vehicleList[rdIndexRoute].route.size()==2)
+        {
+            continue;
+        }
+        else
+        {
+             int rdPosInRoute = rand()%(vehicleList[rdIndexRoute].route.size()-2) + 1;
+             locationList.push_back(vehicleList[rdIndexRoute].route[rdPosInRoute]);
+             isInserted[vehicleList[rdIndexRoute].route[rdPosInRoute].idCustomer] = false;
+             vehicleList[rdIndexRoute].currentCapacity -= vehicleList[rdIndexRoute].route[rdPosInRoute].deman;
+             vehicleList[rdIndexRoute].route.erase(vehicleList[rdIndexRoute].route.begin() + rdPosInRoute);
+              nbOfCusServiced--;
+             removed++;
+        }
+
+    }
+}
+
 void Solution::PrintInput()
 {
+    cout << nbOfCustomer <<" " << nbOfLocation << " "<< nbOfVehicle << endl;
+    cout<<locationList[0].xCoor <<" " << locationList[0].yCoor << endl;
+    cout <<timeTravel[0][1] <<" " <<costBtwLocation[0][1] << endl;
   /*   ofstream coutFile("instance_0-triangle_OUTPUT.txt");
      coutFile << Objective() << endl;
      for(int v = 0; v < vehicleList.size(); v++)
