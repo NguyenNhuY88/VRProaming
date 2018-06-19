@@ -6,11 +6,35 @@
 #include<ctime>
 using namespace std;
 
+
+
 int main()
 {
+/*
+    sortingHelper *p = new sortingHelper[5];
+
+	p[0].value = 20.9;
+	p[1].value = 19.9;
+	p[2].value = 22.9;
+	p[3].value = 24.8;
+	p[4].value = 23.5;
+
+	for(int i=0; i<5; i++){
+		p[i].showInfo();
+	}
+
+    cout << "\n merge sort" << endl;
+    mergeSort(p,5);
+    for(int i=0; i<5; i++){
+		p[i].showInfo();
+	}
+
+*/
+
+
    // srand (time(NULL));
     Solution *s = new Solution();
-    char *filename = "instance_0-triangle.txt";
+    char *filename = "instance_14-triangle.txt";
     s->ReadProblem(filename);
     s->InitSolution();
 
@@ -40,16 +64,27 @@ int main()
         s->CalculateChronoInfo();
         s->CalculateMaxDelay();
         s->CalculateInsertionCost();
-        //costTm = s->RegretOne();
+        costTm = s->RegretOne();
       //costTm = s->Regret2();
-        costTm = s->Regret3();
+       // costTm = s->Regret3();
     }
         s->Objective();
         cout <<"khoi tao regret3 obj = "<<s->obj<<endl << endl;
 
+        for(int i = 0; i < s->nbOfVehicle; i++)
+    {
+        cout <<"route " << i << ": " ;
+        for(int j =0; j < s->vehicleList[i].route.size();j++)
+        {
+            cout <<s->vehicleList[i].route[j].id << " ";
+        }
+        cout << endl;
+    }
+
+
     //LNS
     int nbLoops = 0;
-    while(nbLoops < 5000)
+    while(nbLoops < 10000)
     {
 
         //copy solution s to solution potential:
@@ -78,9 +113,9 @@ int main()
 
         //double costBtwLocation[500][500];
         //double timeTravel[500][500];
-        for(int i = 0; i <500; i++)
+        for(int i = 0; i <potential->nbOfLocation; i++)
         {
-            for(int j =0; j <500; j++)
+            for(int j =0; j <potential->nbOfLocation; j++)
             {
                 potential->costBtwLocation[i][j] = s->costBtwLocation[i][j];
                 potential->timeTravel[i][j]      = s->timeTravel[i][j];
@@ -92,7 +127,7 @@ int main()
         int rdUpdate = -1;
         int q = -1;        //so location bi loai bo trong mot solution
         rdRepair = rand()%3;    //rdRepair in the range 0 to 2
-        rdUpdate = rand()%1;
+        rdUpdate = rand()%2;
         q = rand()%((s->nbOfCusServiced)/2) + 4;
 
     //cout <<"a b c" << rdRepair <<" "<< rdUpdate<<" " <<q << endl;
@@ -100,7 +135,13 @@ int main()
         //destroysolutiion
         if(rdUpdate==0)
         {
-            potential->RandomRemoval(q);
+           potential->RandomRemoval(q);
+
+        }
+        else if(rdUpdate==1)
+        {
+              potential->CalculateRemovalCost();
+              potential->WorstRemoval(q,6);
         }
 
         //repair
@@ -147,7 +188,7 @@ int main()
         if(potential->nbOfCusServiced > s->nbOfCusServiced || (potential->nbOfCusServiced == s->nbOfCusServiced && potential->obj < s->obj))
         {
             solancaithien++;
-            cout<<"obj cua s = " << s->obj << "\t" << "obj potentail = "<<potential->obj<<endl;
+
             //copy solution potential to s:
             s->nbOfCustomer     = potential->nbOfCustomer;
             s->nbOfCusServiced  = potential->nbOfCusServiced;
@@ -159,7 +200,7 @@ int main()
                 s->isInserted[i] = potential->isInserted[i];
             }
             s->obj = potential->obj;
-            cout <<"moi " <<s->obj<<endl;
+            cout << "Improved! obj = " << s->obj<<endl ;
           //  vector<Vehicle> vehicleList;
             s->locationList.clear();
             s->vehicleList.clear();
@@ -186,20 +227,20 @@ int main()
             }
 
         }
-        else kocaithien++;
+        else{ kocaithien++;}
         nbLoops++;
         delete(potential);
     }
 
-cout <<"cai thien = " <<solancaithien <<"\t ko cai thien = " << kocaithien<<endl;
+    cout <<"cai thien = " <<solancaithien <<"\t ko cai thien = " << kocaithien<<endl;
 
 
 
     //s->Objective();
-    cout <<"Objective: " << s->obj <<endl << endl;
+
 
      //in moi route
-     cout << "Check Route" <<endl;
+    cout << "Check Route" <<endl;
      for(int v = 0; v < s->vehicleList.size(); v++)
      {
          cout <<"Route " << v << endl;
@@ -227,14 +268,19 @@ cout <<"cai thien = " <<solancaithien <<"\t ko cai thien = " << kocaithien<<endl
 
     }
     cout << endl;
-    cout << "before remove number of customer serviced= " << s->nbOfCusServiced <<endl;
 
 
- /*
-    //xoa bot diem trong route
-    s->RandomRemoval(5);
-    cout << "remove" << "number of customer serviced= " << s->nbOfCusServiced <<endl;
-    	for(int i = 0; i < s->nbOfVehicle; i++)
+     //removalCost
+   /*     s->CalculateRemovalCost();
+        cout <<"removalCost route0  pos 1= " << s->vehicleList[0].removalCost[1]<<endl;
+ * /  s->WorstRemoval(5,6);
+
+
+
+    //in moi route
+ /*    cout << "Check xoa (5,6)" <<endl;
+
+	for(int i = 0; i < s->nbOfVehicle; i++)
     {
         cout <<"route " << i << ": " ;
         for(int j =0; j < s->vehicleList[i].route.size();j++)
@@ -249,28 +295,12 @@ cout <<"cai thien = " <<solancaithien <<"\t ko cai thien = " << kocaithien<<endl
         cout <<s->locationList[i].id << " ";
 
     }
-    cout << endl;
 */
 
- /* s->CalculateChronoInfo();
-    s->CalculateMaxDelay();
-    s->CalculateInsertionCost();
-    cout <<"insertionCost[1][1] cua location co id = 2:  " << s->locationList[1].insertionCost[1][1] << endl;
-    //them node 2 vao route dau tien tai vi tri thu 1
-    s->vehicleList[0].route.insert(s->vehicleList[0].route.begin()+1, s->locationList[1] );
-    s->locationList.erase(s->locationList.begin()+1);
-    s->CalculateChronoInfo();
-    s->CalculateMaxDelay();
-    s->CalculateInsertionCost();
 
 
-   cout << s->vehicleList[0].maxDelay[1]<<endl;
-
-   cout << s->vehicleList[0].route[1].id <<" " <<s->vehicleList[0].arrivalTime[1] <<" " << s->vehicleList[0].startWorkingTime[1] << " "<<s->vehicleList[0].waitingTime[1] << endl;
-
-    // tinh insertionCost cua cac lcation con lai trong locationList
-*/
-
-   // s->PrintInput();
+ cout <<"Objective: " << s->obj <<endl << endl;
+ cout <<"da phuc vu: " <<s->nbOfCusServiced <<endl;
+    s->PrintInput();
     return 0;
 }

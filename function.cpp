@@ -5,6 +5,7 @@
 #include<sstream>
 #include<algorithm>
 #include<stdlib.h>
+#include<cmath>
 #include<ctime>
 #define MAX_NUM 99999999.0
 void Solution::ReadProblem(char *filename)
@@ -23,8 +24,9 @@ void Solution::ReadProblem(char *filename)
         openFile >> nbOfCustomer >> nbOfLocation >> timeHorizon >> vehCapacity;
      //   cout << nbOfCustomer <<" " << nbOfLocation << " " << timeHorizon << " " << vehCapacity<<endl;
 
-       // nbOfVehicle = nbOfCustomer;
-        nbOfVehicle = nbOfCustomer;
+
+      nbOfVehicle = nbOfCustomer;
+       //   nbOfVehicle = 6;
 
     // delete line text and empty line
         getline(openFile,s);
@@ -212,7 +214,7 @@ void Solution::CalculateInsertionCost()
                     double diffTime = timeTravel[vehicleList[v].route[lc-1].id][locationList[l].id] + timeTravel[locationList[l].id][vehicleList[v].route[lc].id]
                                     - timeTravel[vehicleList[v].route[lc-1].id][vehicleList[v].route[lc].id];
 
-                   if(vehicleList[v].currentCapacity+locationList[l].deman <= vehicleList[v].capacity && diffTime + waitingTimeAtL <= vehicleList[v].waitingTime[lc] + vehicleList[v].maxDelay[lc] && arrivalTimeAtL <locationList[l].windowEndTime)
+                   if(vehicleList[v].currentCapacity+locationList[l].deman <= vehicleList[v].capacity && diffTime + waitingTimeAtL <= vehicleList[v].waitingTime[lc] + vehicleList[v].maxDelay[lc] && arrivalTimeAtL <=locationList[l].windowEndTime)
                    {
 
                        locationList[l].insertionCost[v][lc] = costBtwLocation[vehicleList[v].route[lc-1].id][locationList[l].id]
@@ -230,7 +232,18 @@ void Solution::CalculateInsertionCost()
 
     }
 }
-
+void Solution::CalculateRemovalCost()
+{
+    for(int v =0; v <vehicleList.size(); v++)
+    {
+        for(int pos =1; pos <vehicleList[v].route.size()-1; pos++)
+        {
+            vehicleList[v].removalCost[pos] = costBtwLocation[vehicleList[v].route[pos-1].id][vehicleList[v].route[pos].id]
+                                              + costBtwLocation[vehicleList[v].route[pos].id][vehicleList[v].route[pos+1].id]
+                                              - costBtwLocation[vehicleList[v].route[pos-1].id][vehicleList[v].route[pos+1].id];
+        }
+    }
+}
 void Solution::InitSolution()
 {
     nbOfCusServiced = 0;
@@ -570,7 +583,7 @@ double Solution::Regret3()
 
 void Solution::RandomRemoval(int nbOfRemove)
 {
-    srand (time(NULL));
+   // srand (time(NULL));
     int removed = 0;
     while(removed!=nbOfRemove)
     {
@@ -593,19 +606,95 @@ void Solution::RandomRemoval(int nbOfRemove)
     }
 }
 
+void Merge(SortingHelper A[], int c, int b){
+    //b: so phan tu cua mang A, c la vi tri phan tu o giua
+    // mang a[0...c] va a[c+1...b-1] la cac mang da sap xep
+
+    int i = 0, k =0, j = c+1;
+
+    SortingHelper *B = new SortingHelper[b];
+    while((i < c+1)&& (j <b)){
+        if(A[i].value < A[j].value)
+            B[k++] = A[i++];
+        else
+            B[k++] = A[j++];
+    }
+    while(i<c+1){
+        B[k++] = A[i++];
+    }
+    while(j < b){
+        B[k++] = A[j++];
+    }
+    i = 0;
+    for(k = 0; k < b; k++){
+        A[i++] = B[k];
+    }
+	delete []B;
+}
+void mergeSort(SortingHelper p[], int size){
+    if(size>1){
+       int t = size/2;
+        mergeSort(p,t );
+        mergeSort(p,size - t);
+        Merge(p,t-1,size);
+
+    }
+}
+
+void Solution::WorstRemoval(int q,double p)
+{
+    while(q>0)
+    {
+
+        SortingHelper *sh = new SortingHelper[100];
+        int count = 0;
+        for(int v = 0; v < vehicleList.size(); v++)
+        {
+            for(int pos = 1; pos <vehicleList[v].route.size()-1; pos++)
+            {
+                sh[count].value = vehicleList[v].removalCost[pos];
+                sh[count].firstIndex = v;
+                sh[count].secondIndex = pos;
+                count++;
+            }
+        }
+        mergeSort(sh,count);
+       /* for(int i =0; i <count; i++)
+        {
+            sh[i].showInfo();
+        }*/
+        double y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        while(y==1)
+        {
+            y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        }
+        int chosenIndex =count - 1 - floor(pow(y,p)*count);
+
+
+        int rdIndexRoute = sh[chosenIndex].firstIndex;
+        int rdPosInRoute = sh[chosenIndex].secondIndex;
+        locationList.push_back(vehicleList[rdIndexRoute].route[rdPosInRoute]);
+        isInserted[vehicleList[rdIndexRoute].route[rdPosInRoute].idCustomer] = false;
+        vehicleList[rdIndexRoute].currentCapacity -= vehicleList[rdIndexRoute].route[rdPosInRoute].deman;
+        vehicleList[rdIndexRoute].route.erase(vehicleList[rdIndexRoute].route.begin() + rdPosInRoute);
+        nbOfCusServiced--;
+
+
+        q = q-1;
+
+    }
+}
 void Solution::PrintInput()
 {
-    cout << nbOfCustomer <<" " << nbOfLocation << " "<< nbOfVehicle << endl;
+  /*  cout << nbOfCustomer <<" " << nbOfLocation << " "<< nbOfVehicle << endl;
     cout<<locationList[0].xCoor <<" " << locationList[0].yCoor << endl;
     cout <<timeTravel[0][1] <<" " <<costBtwLocation[0][1] << endl;
-  /*   ofstream coutFile("instance_0-triangle_OUTPUT.txt");
-     coutFile << Objective() << endl;
+  */   ofstream coutFile("instance_14-triangle.out");
+     coutFile << obj << endl;
      for(int v = 0; v < vehicleList.size(); v++)
      {
-
          if(vehicleList[v].route.size()!=2)
          {
-            coutFile <<"Route " << v << endl;
             for(int pos = 0; pos < vehicleList[v].route.size(); pos++)
              {
                  coutFile <<vehicleList[v].route[pos].idCustomer <<" " <<vehicleList[v].route[pos].id << endl;
@@ -614,5 +703,6 @@ void Solution::PrintInput()
          }
 
      }
-     */
+
 }
+

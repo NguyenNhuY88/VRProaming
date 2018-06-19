@@ -33,6 +33,7 @@ public:
 	double startWorkingTime[100];
 	double waitingTime[100];
 	double maxDelay[100];
+	double removalCost[100];
 
 };
 
@@ -59,6 +60,7 @@ public:
 	void CalculateChronoInfo();
     void CalculateMaxDelay();
     void CalculateInsertionCost();
+    void CalculateRemovalCost();
     void InitSolution();
     double RegretOne();
     double Regret2();
@@ -66,5 +68,16 @@ public:
     void Objective();
     void RandomRemoval(int nbOfRemove);
     void PrintInput();
+    void WorstRemoval(int q, double p);
 };
+class SortingHelper{
+public:
 
+	double value;
+	int firstIndex;
+	int secondIndex;
+
+	void showInfo(){
+		cout  << value <<"  fistIndex "<<firstIndex <<" second index: " << secondIndex  <<endl;
+	}
+};
