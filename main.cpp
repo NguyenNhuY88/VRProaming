@@ -34,7 +34,7 @@ int main()
 
    // srand (time(NULL));
     Solution *s = new Solution();
-    char *filename = "instance_14-triangle.txt";
+    char *filename = "instance_8-triangle.txt";
     s->ReadProblem(filename);
     s->InitSolution();
 
@@ -83,6 +83,7 @@ int main()
 
 
     //LNS
+
     int nbLoops = 0;
     while(nbLoops < 10000)
     {
@@ -127,21 +128,30 @@ int main()
         int rdUpdate = -1;
         int q = -1;        //so location bi loai bo trong mot solution
         rdRepair = rand()%3;    //rdRepair in the range 0 to 2
-        rdUpdate = rand()%2;
-        q = rand()%((s->nbOfCusServiced)/2) + 4;
+        rdUpdate = rand()%3;
+        q = rand()%((s->nbOfCusServiced)/2 - 4 +1) + 4;         // random tu a den b, su dụng: a + rand()%(b-a+1)
 
-    //cout <<"a b c" << rdRepair <<" "<< rdUpdate<<" " <<q << endl;
+    //cout <<"rdR rdU q: " << rdRepair <<" "<< rdUpdate<<" " <<q << endl;
 
         //destroysolutiion
+
         if(rdUpdate==0)
         {
+            //cout<<"ramdomremoval"<<endl;
            potential->RandomRemoval(q);
 
         }
         else if(rdUpdate==1)
         {
-              potential->CalculateRemovalCost();
-              potential->WorstRemoval(q,6);
+           // cout<<"WostRemoval"<<endl;
+            potential->CalculateRemovalCost();
+            potential->WorstRemoval(q,6);
+        }
+        else if(rdUpdate==2)
+        {
+
+                potential->ShawRemoval(q,6);
+
         }
 
         //repair
@@ -271,16 +281,17 @@ int main()
 
 
      //removalCost
-   /*     s->CalculateRemovalCost();
+ /*       s->CalculateRemovalCost();
         cout <<"removalCost route0  pos 1= " << s->vehicleList[0].removalCost[1]<<endl;
- * /  s->WorstRemoval(5,6);
-
-
-
+        s->WorstRemoval(11,6);
+*/
+/*
+   s->ShawRemoval(13,6);
+    //s->RandomRemoval(10);
     //in moi route
- /*    cout << "Check xoa (5,6)" <<endl;
+     cout << "Check xoa (10,6)" <<endl;
 
-	for(int i = 0; i < s->nbOfVehicle; i++)
+	for(int i = 0; i <s->nbOfVehicle; i++)
     {
         cout <<"route " << i << ": " ;
         for(int j =0; j < s->vehicleList[i].route.size();j++)
@@ -295,11 +306,9 @@ int main()
         cout <<s->locationList[i].id << " ";
 
     }
+
 */
-
-
-
- cout <<"Objective: " << s->obj <<endl << endl;
+ cout <<"\nObjective: " << s->obj <<endl << endl;
  cout <<"da phuc vu: " <<s->nbOfCusServiced <<endl;
     s->PrintInput();
     return 0;

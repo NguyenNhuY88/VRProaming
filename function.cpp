@@ -26,7 +26,7 @@ void Solution::ReadProblem(char *filename)
 
 
       nbOfVehicle = nbOfCustomer;
-       //   nbOfVehicle = 6;
+      //nbOfVehicle = 6;
 
     // delete line text and empty line
         getline(openFile,s);
@@ -587,7 +587,7 @@ void Solution::RandomRemoval(int nbOfRemove)
     int removed = 0;
     while(removed!=nbOfRemove)
     {
-        int rdIndexRoute = rand()%(nbOfVehicle-1)+0;
+        int rdIndexRoute = rand()%nbOfVehicle;  // random route 0 den route nbOfVehicle-1
         if(vehicleList[rdIndexRoute].route.size()==2)
         {
             continue;
@@ -679,17 +679,290 @@ void Solution::WorstRemoval(int q,double p)
         vehicleList[rdIndexRoute].route.erase(vehicleList[rdIndexRoute].route.begin() + rdPosInRoute);
         nbOfCusServiced--;
 
-
+        delete (sh);
         q = q-1;
 
     }
 }
+
+
+void Solution::ShawRemoval(int q, double p)
+{
+    int *D = new int[100]; //mang luu id cua cac loction se bi xoa;
+    int sizeD = 0;
+  /*
+    int lcSize = locationList.size();
+    int vhSize = vehicleList.size();
+     double **minCost_Lc_R = new double*[lcSize];    //minCost_Lc_R[i][j]  cost it nhat cua location i tren xe j.
+    double **minPost_index = new double* [lcSize];  //minPost_index[i][j] vi tri chen co cost it nhat cua location i tren xe j
+    for(int i=0; i< lcSize; i++)
+    {
+        minCost_Lc_R[i] = new double[vhSize];
+        minPost_index[i] = new double[vhSize];
+    }
+*/
+
+
+    bool trace[100][100]; // trace[i][j] = true neu location nam o vi tri j trong route i da duoc cho vao mang D ( mang cac diem sap bi xoa bo)
+    for(int v = 0; v <100; v++)
+    {
+        for(int pos = 0; pos<100;pos++)
+        {
+            trace[v][pos] = false;
+        }
+    }
+
+
+
+
+
+
+    //chon ngau nhien mot route, mot vi tri trong route
+    int rdRoute =0;
+    do
+    {
+        rdRoute = rand()%nbOfVehicle;
+    }while(vehicleList[rdRoute].route.size()==2);
+
+    int rdPos = rand()%(vehicleList[rdRoute].route.size()-2) + 1;
+    //them request vua chon vao tap D
+    D[sizeD]=vehicleList[rdRoute].route[rdPos].id;
+    sizeD++;
+    trace[rdRoute][rdPos] = true;
+   // cout <<"firsRandom: " <<rdRoute <<" " <<rdPos<<endl;
+
+    while(q-1>0)    //q-1 vi da chon duoc 1 diem ban dau o tren de cho vao tap D
+    {
+        //cout <<"luot while thu " <<q<<endl;
+        SortingHelper *sh = new SortingHelper[100];
+        int count = 0;
+
+        //chon ngau nhien mot request trong tap D
+        int rdIndexD = rand()%sizeD;
+        int rRoute = -1, rPos = -1;
+        for(int v = 0; v < vehicleList.size(); v++)
+        {
+            if(rRoute== -1)
+            {
+                for(int pos = 1; pos <vehicleList[v].route.size()-1;pos++)
+                 {
+                     if(vehicleList[v].route[pos].id==D[rdIndexD])
+                     {
+                         rRoute = v;
+                         rPos   = pos;
+                         break;
+                     }
+                 }
+
+            }
+            else break;
+
+        }
+
+        //danh gia hieu startWorking cua diem vua chon trong tap D voi cac diem con lai o trong solution
+        for(int v = 0; v < vehicleList.size(); v++)
+        {
+            if(vehicleList[v].route.size()>2)
+            {
+                 for(int pos = 1; pos <vehicleList[v].route.size()-1;pos++)
+                {
+                    if(trace[v][pos]==false)
+                    {
+
+                        sh[count].value = abs(vehicleList[rRoute].startWorkingTime[rPos]-vehicleList[v].startWorkingTime[pos]);
+                        sh[count].firstIndex = v;
+                        sh[count].secondIndex = pos;
+                       // cout <<"sh " << v <<" " <<pos<<endl;
+                        count++;
+                    }
+                }
+            }
+
+        }
+        mergeSort(sh,count);
+
+       //chon ngau nhien mot diem de them vao tap D
+        double y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        while(y==1)
+        {
+            y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        }
+
+        int chosenIndex =count - 1 - floor(pow(y,p)*count);
+      /*  cout<<"chon "<<sh[chosenIndex].firstIndex <<" " <<sh[chosenIndex].secondIndex
+            << " id "<<vehicleList[sh[chosenIndex].firstIndex].route[sh[chosenIndex].secondIndex].id<<endl;
+        */
+        D[sizeD]=vehicleList[sh[chosenIndex].firstIndex].route[sh[chosenIndex].secondIndex].id;
+        sizeD++;
+
+        trace[sh[chosenIndex].firstIndex][sh[chosenIndex].secondIndex]=true;
+
+
+        delete []sh;
+
+      //  delete sh;  gay loi
+
+        q--;
+
+
+    }
+
+    //xoa cac diem trong tap D khoi solution
+
+
+    for(int i = 0; i <sizeD; i++)
+    {
+
+        int routeDelete = -1, posDelete = -1;
+        //chon ra route, pos cua location bi xoa ( id cua loacion luu trong mang D)
+          for(int v = 0; v < vehicleList.size(); v++)
+        {
+            if(routeDelete== -1)
+            {
+                for(int pos = 1; pos <vehicleList[v].route.size()-1;pos++)
+                 {
+                     if(vehicleList[v].route[pos].id==D[i])
+                     {
+                         routeDelete = v;
+                         posDelete   = pos;
+                         break;
+                     }
+                 }
+
+            }
+            else break;
+
+        }
+       // cout <<"D["<<i<<"]= "<<D[i]<< " "<< routeDelete <<" " <<posDelete<<endl;
+
+        //xoa
+        int rdIndexRoute = routeDelete;
+        int rdPosInRoute = posDelete;
+
+       locationList.push_back(vehicleList[rdIndexRoute].route[rdPosInRoute]);
+        isInserted[vehicleList[rdIndexRoute].route[rdPosInRoute].idCustomer] = false;
+        vehicleList[rdIndexRoute].currentCapacity -= vehicleList[rdIndexRoute].route[rdPosInRoute].deman;
+        vehicleList[rdIndexRoute].route.erase(vehicleList[rdIndexRoute].route.begin() + rdPosInRoute);
+        nbOfCusServiced--;
+
+
+    }
+    delete[]D;
+    //delete D;
+}
+
+
+
+/*
+void Solution::ShawRemoval(int q, double p)
+{
+    D_listRemove *D = new D_listRemove[100];
+    int countD = 0;
+    bool trace[100][100]; // trace[i][j] = true neu location nam o vi tri j trong route i da duoc cho vao mang D ( mang cac diem sap bi xoa bo)
+    for(int v = 0; v <vehicleList.size(); v++)
+    {
+        for(int pos = 1; pos<vehicleList[v].route.size()-1;pos++)
+        {
+            trace[v][pos] = false;
+        }
+    }
+    //chon ngau nhien mot route, mot vi tri trong route
+    int rdRoute =0;
+    while(vehicleList[rdRoute].route.size()==2)
+    {
+        rdRoute = rand()%nbOfVehicle;
+    }
+    int rdPos = rand()%(vehicleList[rdRoute].route.size()-2) + 1;
+    //them request vua chon vao tap D
+    D[countD].indexRoute = rdRoute;
+    D[countD].indexPos   = rdPos;
+    countD++;
+    trace[rdRoute][rdPos] = true;
+    cout <<"firsRandom: " <<rdRoute <<" " <<rdPos<<endl;
+
+    while(q-1>0)    //q-1 vi da chon duoc 1 diem ban dau o tren de cho vao tap D
+    {
+        cout <<"q= " <<q<<endl;
+        SortingHelper *sh = new SortingHelper[100];
+        int count = 0;
+        //chon ngau nhien mot request trong tap D
+        int rdIndexD = rand()%(countD);
+        cout <<"rdIndexD = " <<rdIndexD <<endl;
+        int rRoute = D[rdIndexD].indexRoute;
+        int rPos   = D[rdIndexD].indexPos;
+        cout <<"D[rdIndexD].indexRoute = " <<D[rdIndexD].indexRoute<<" " <<"D[rdIndexD].indexPos " <<D[rdIndexD].indexPos<<endl;
+        //danh gia hieu startWorking cua diem vua chon trong tap D voi cac diem con lai o trong solution
+        for(int v = 0; v < vehicleList.size(); v++)
+        {
+            if(vehicleList[v].route.size()>2)
+            {
+                 for(int pos = 1; pos <vehicleList[v].route.size()-1;pos++)
+                {
+                    if(trace[v][pos]==false)
+                    {
+
+                        sh[count].value = abs(vehicleList[rRoute].startWorkingTime[rPos]-vehicleList[v].startWorkingTime[pos]);
+                        sh[count].firstIndex = v;
+                        sh[count].secondIndex = pos;
+                        cout <<"sh " << v <<" " <<pos<<endl;
+                        count++;
+                    }
+                }
+            }
+
+        }
+        mergeSort(sh,count);
+
+       //chon ngau nhien mot diem de them vao tap D
+        double y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        while(y==1)
+        {
+            y = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        }
+
+        int chosenIndex =count - 1 - floor(pow(y,p)*count);
+
+        D[countD].indexRoute = sh[chosenIndex].firstIndex;
+        D[countD].indexPos   = sh[chosenIndex].secondIndex;
+        cout <<"D add r-p: " <<countD <<" " <<D[countD].indexRoute <<" " <<  D[countD].indexPos <<endl;
+        trace[D[countD].indexRoute][D[countD].indexPos]=true;
+
+
+        delete []sh;
+        delete(sh);
+        countD++;
+        q--;
+    }
+    //cout<<"countD= " << countD <<endl;
+    //xoa cac diem trong tap D khoi solution
+
+
+    for(int i = 0; i <countD; i++)
+    {
+
+        int rdIndexRoute = D[i].indexRoute;
+        int rdPosInRoute = D[i].indexPos;
+       cout <<D[i].indexRoute<<" " << D[i].indexPos<<endl;
+
+       locationList.push_back(vehicleList[rdIndexRoute].route[rdPosInRoute]);
+        isInserted[vehicleList[rdIndexRoute].route[rdPosInRoute].idCustomer] = false;
+        vehicleList[rdIndexRoute].currentCapacity -= vehicleList[rdIndexRoute].route[rdPosInRoute].deman;
+        vehicleList[rdIndexRoute].route.erase(vehicleList[rdIndexRoute].route.begin() + rdPosInRoute);
+        nbOfCusServiced--;
+
+        cout <<"i = " <<i <<endl;
+    }
+
+    delete[]D;
+    delete D;
+
+}*/
 void Solution::PrintInput()
 {
   /*  cout << nbOfCustomer <<" " << nbOfLocation << " "<< nbOfVehicle << endl;
     cout<<locationList[0].xCoor <<" " << locationList[0].yCoor << endl;
     cout <<timeTravel[0][1] <<" " <<costBtwLocation[0][1] << endl;
-  */   ofstream coutFile("instance_14-triangle.out");
+  */   ofstream coutFile("instance_7-triangle.out");
      coutFile << obj << endl;
      for(int v = 0; v < vehicleList.size(); v++)
      {

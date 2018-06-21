@@ -69,6 +69,7 @@ public:
     void RandomRemoval(int nbOfRemove);
     void PrintInput();
     void WorstRemoval(int q, double p);
+    void ShawRemoval(int q, double p);
 };
 class SortingHelper{
 public:
@@ -80,4 +81,10 @@ public:
 	void showInfo(){
 		cout  << value <<"  fistIndex "<<firstIndex <<" second index: " << secondIndex  <<endl;
 	}
+};
+class D_listRemove
+{
+public:
+    int indexRoute;
+    int indexPos;
 };
